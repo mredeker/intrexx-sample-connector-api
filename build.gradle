@@ -6,7 +6,7 @@ targetCompatibility = 1.8
 
 
 group   = 'de.uplanet.lucy'
-version = '8.1.5'
+version = '8.1.11'
 
 
 repositories
@@ -61,4 +61,39 @@ jar {
             'Implementation-Title':   project.name,
             'Implementation-Version': version)
     }
+}
+
+task copyDependencies(type: Copy) {
+	from configurations.default
+	into 'build/dependencies'
+}
+
+task startPortal (type: JavaExec) {
+	standardOutput = System.out
+	errorOutput = System.err
+
+	classpath = (sourceSets.main.runtimeClasspath + 
+				 files("${gradle.INTREXX_HOME}/lib/update") + 
+				 fileTree(include: ['*.jar'], dir: "${gradle.INTREXX_HOME}/lib") +
+				 fileTree(include: ['*.jar'], dir: "${gradle.INTREXX_HOME}/lib/custom"))
+
+	//doFirst {println classpath.join(',');println gradle.INTREXX_LOG4J_CFG}
+
+	main = 'de.uplanet.lucy.server.portalserver.PortalService'
+
+	jvmArgs "-Xbootclasspath/p:${gradle.INTREXX_HOME}/lib/xsltc-hndl-fix.jar"
+	jvmArgs '-Dfile.encoding=UTF-8'
+	jvmArgs "-Djava.library.path=${gradle.INTREXX_JRE_LIB_PATH}"
+	jvmArgs "-Dlog4j.configuration=${gradle.INTREXX_LOG4J_CFG}"
+	jvmArgs '-Djava.security.auth.login.config=file:internal/cfg/LucyAuth.cfg'
+	jvmArgs '-Dcom.sun.management.jmxremote.port=9500'
+	jvmArgs '-Dcom.sun.management.jmxremote.authenticate=false'
+	jvmArgs '-Dcom.sun.management.jmxremote.ssl=false'
+	jvmArgs '-Xms512m'
+	jvmArgs '-Xmx1024m'
+	jvmArgs '-Djava.net.preferIPv4Stack=true'
+	jvmArgs '-Dde.uplanet.jdbc.trace=false'
+
+	environment ([INTREXX_HOME: gradle.INTREXX_HOME])
+	workingDir gradle.INTREXX_PORTAL_DIR
 }
